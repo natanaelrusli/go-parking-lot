@@ -175,3 +175,35 @@ func TestParkingLotCapacity(t *testing.T) {
 		}
 	})
 }
+
+func TestParkingAttendant(t *testing.T) {
+	t.Run("should be able to park cars", func(t *testing.T) {
+		parkingLot := NewParkingLot(10)
+		parkingAttendant := NewParkingAttendant("John", parkingLot)
+
+		car := NewCar("AAA111")
+		ticket, err := parkingAttendant.ParkCar(car)
+
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		if ticket == nil {
+			t.Error("Expected ticket, got nil")
+		}
+	})
+
+	t.Run("should be able to unpark cars", func(t *testing.T) {
+		parkingLot := NewParkingLot(10)
+		parkingAttendant := NewParkingAttendant("John", parkingLot)
+
+		car := NewCar("AAA111")
+		ticket, _ := parkingAttendant.ParkCar(car)
+
+		_, err := parkingAttendant.parkingLot.Unpark(ticket)
+
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+	})
+}

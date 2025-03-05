@@ -7,6 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type ParkingAttendant struct {
+	name       string
+	parkingLot *ParkingLot
+}
+
 type ParkingLot struct {
 	// [ticketNumber]plateNumber
 	parkedCars map[string]string
@@ -28,6 +33,13 @@ func generateTicketNumber() string {
 	return uuid.New().String()[:8]
 }
 
+func NewParkingAttendant(name string, parkingLot *ParkingLot) *ParkingAttendant {
+	return &ParkingAttendant{
+		name:       name,
+		parkingLot: parkingLot,
+	}
+}
+
 func NewParkingLot(capacity int) *ParkingLot {
 	return &ParkingLot{
 		parkedCars:  make(map[string]string),
@@ -40,6 +52,18 @@ func NewCar(licensePlate string) *Car {
 	return &Car{
 		licensePlate: licensePlate,
 	}
+}
+
+func (a *ParkingAttendant) GetName() string {
+	return a.name
+}
+
+func (a *ParkingAttendant) ParkCar(car *Car) (*Ticket, error) {
+	return a.parkingLot.Park(car)
+}
+
+func (a *ParkingAttendant) UnparkCar(ticket *Ticket) (*Car, error) {
+	return a.parkingLot.Unpark(ticket)
 }
 
 func (p *ParkingLot) checkCarExist(car *Car) bool {
