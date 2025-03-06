@@ -1,8 +1,8 @@
-package main
+package ticket
 
 import "github.com/google/uuid"
 
-func generateTicketNumber() string {
+func GenerateTicketNumber() string {
 	// Using first 8 characters of UUID
 	return uuid.New().String()[:8]
 }

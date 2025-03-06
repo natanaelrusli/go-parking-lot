@@ -1,15 +1,17 @@
-package main
+package attendant
 
 import (
 	"testing"
 
 	"github.com/natanaelrusli/parking-lot/car"
+	"github.com/natanaelrusli/parking-lot/errors"
+	"github.com/natanaelrusli/parking-lot/parkinglot"
 )
 
 func TestParkingAttendant(t *testing.T) {
 	t.Run("should be able to park cars", func(t *testing.T) {
-		parkingLot := NewParkingLot(10)
-		parkingAttendant := NewParkingAttendant("John", []*ParkingLot{parkingLot})
+		parkingLot := parkinglot.New(10)
+		parkingAttendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{parkingLot})
 
 		car := car.NewCar("AAA111")
 		ticket, err := parkingAttendant.ParkCar(car)
@@ -24,8 +26,8 @@ func TestParkingAttendant(t *testing.T) {
 	})
 
 	t.Run("should be able to unpark cars", func(t *testing.T) {
-		parkingLot := NewParkingLot(10)
-		parkingAttendant := NewParkingAttendant("John", []*ParkingLot{parkingLot})
+		parkingLot := parkinglot.New(10)
+		parkingAttendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{parkingLot})
 
 		car := car.NewCar("AAA111")
 		ticket, _ := parkingAttendant.ParkCar(car)
@@ -38,9 +40,9 @@ func TestParkingAttendant(t *testing.T) {
 	})
 
 	t.Run("should park cars in next lot when first lot is full", func(t *testing.T) {
-		lot1 := NewParkingLot(1)
-		lot2 := NewParkingLot(1)
-		attendant := NewParkingAttendant("John", []*ParkingLot{lot1, lot2})
+		lot1 := parkinglot.New(1)
+		lot2 := parkinglot.New(1)
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{lot1, lot2})
 
 		car1 := car.NewCar("AAA111")
 		car2 := car.NewCar("BBB222")
@@ -66,8 +68,8 @@ func TestParkingAttendant(t *testing.T) {
 		// Try parking third car (should fail as both lots are full)
 		car3 := car.NewCar("CCC333")
 		_, err = attendant.ParkCar(car3)
-		if err == nil {
-			t.Error("Expected error when all lots are full")
+		if err != errors.ErrAllLotsAreFull {
+			t.Errorf("Expected error %v when all lots are full, got %v", errors.ErrAllLotsAreFull, err)
 		}
 	})
 }

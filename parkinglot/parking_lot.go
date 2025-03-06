@@ -1,15 +1,16 @@
-package main
+package parkinglot
 
 import (
 	"github.com/natanaelrusli/parking-lot/errors"
 	"github.com/natanaelrusli/parking-lot/models"
+	"github.com/natanaelrusli/parking-lot/ticket"
 )
 
 type ParkingLot struct {
 	*models.ParkingLot
 }
 
-func NewParkingLot(capacity int) *ParkingLot {
+func New(capacity int) *ParkingLot {
 	return &ParkingLot{
 		ParkingLot: &models.ParkingLot{
 			ParkedCars:  make(map[string]string),
@@ -45,7 +46,7 @@ func (p *ParkingLot) Park(car *models.Car) (*models.Ticket, error) {
 		return nil, errors.ErrCarAlreadyParked
 	}
 
-	ticketNumber := generateTicketNumber()
+	ticketNumber := ticket.GenerateTicketNumber()
 	p.ParkedCars[ticketNumber] = car.LicensePlate
 
 	return &models.Ticket{

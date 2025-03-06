@@ -1,4 +1,4 @@
-package main
+package parkinglot
 
 import (
 	"testing"
@@ -6,28 +6,10 @@ import (
 	"github.com/natanaelrusli/parking-lot/car"
 	"github.com/natanaelrusli/parking-lot/errors"
 	"github.com/natanaelrusli/parking-lot/models"
-	"github.com/natanaelrusli/parking-lot/parkinglot"
-	"github.com/natanaelrusli/parking-lot/ticket"
 )
 
-func TestGenerateTicketNumber(t *testing.T) {
-	tickets := make(map[string]bool)
-	for i := 0; i < 1000; i++ {
-		ticketNum := ticket.GenerateTicketNumber()
-
-		if len(ticketNum) != 8 {
-			t.Errorf("Ticket number length should be 8, got %d", len(ticketNum))
-		}
-
-		if tickets[ticketNum] {
-			t.Errorf("Duplicate ticket number generated: %s", ticketNum)
-		}
-		tickets[ticketNum] = true
-	}
-}
-
 func TestParkingLotOperations(t *testing.T) {
-	parkingLot := parkinglot.New(10)
+	parkingLot := New(10)
 
 	t.Run("Park car", func(t *testing.T) {
 		car := car.NewCar("ABC123")
@@ -71,7 +53,6 @@ func TestParkingLotOperations(t *testing.T) {
 		}
 	})
 
-	// Test unparking with invalid ticket
 	t.Run("Unpark with invalid ticket", func(t *testing.T) {
 		invalidTicket := &models.Ticket{TicketNumber: "INVALID"}
 		unparkedCar, err := parkingLot.Unpark(invalidTicket)
@@ -97,11 +78,9 @@ func TestParkingLotOperations(t *testing.T) {
 		}
 	})
 
-	// Test multiple parking operations
 	t.Run("Multiple parking operations", func(t *testing.T) {
-		parkingLot := parkinglot.New(10)
+		parkingLot := New(10)
 
-		// Park multiple cars
 		car1 := car.NewCar("AAA111")
 		car2 := car.NewCar("BBB222")
 		car3 := car.NewCar("CCC333")
@@ -110,19 +89,16 @@ func TestParkingLotOperations(t *testing.T) {
 		ticket2, _ := parkingLot.Park(car2)
 		ticket3, _ := parkingLot.Park(car3)
 
-		// Verify all tickets are unique
 		if ticket1.TicketNumber == ticket2.TicketNumber ||
 			ticket2.TicketNumber == ticket3.TicketNumber ||
 			ticket1.TicketNumber == ticket3.TicketNumber {
 			t.Error("Ticket numbers should be unique")
 		}
 
-		// Verify all cars are parked
 		if len(parkingLot.ParkedCars) != 3 {
 			t.Errorf("Expected 3 parked cars, got %d", len(parkingLot.ParkedCars))
 		}
 
-		// Unpark cars and verify
 		car1Retrieved, _ := parkingLot.Unpark(ticket1)
 		if car1Retrieved.LicensePlate != "AAA111" {
 			t.Errorf("Expected AAA111, got %s", car1Retrieved.LicensePlate)
@@ -133,14 +109,13 @@ func TestParkingLotOperations(t *testing.T) {
 			t.Errorf("Expected BBB222, got %s", car2Retrieved.LicensePlate)
 		}
 
-		// Verify remaining parked cars
 		if len(parkingLot.ParkedCars) != 1 {
 			t.Errorf("Expected 1 parked car, got %d", len(parkingLot.ParkedCars))
 		}
 	})
 
 	t.Run("should return error when parking the same car twice", func(t *testing.T) {
-		parkingLot := parkinglot.New(10)
+		parkingLot := New(10)
 
 		car := car.NewCar("AAA111")
 		_, _ = parkingLot.Park(car)
@@ -154,15 +129,13 @@ func TestParkingLotOperations(t *testing.T) {
 
 func TestParkingLotCapacity(t *testing.T) {
 	t.Run("should return error when parking 3 cars in a 2 car capacity parking lot", func(t *testing.T) {
-		parkingLot := parkinglot.New(2)
+		parkingLot := New(2)
 
-		// Park two cars
 		car1 := car.NewCar("AAA111")
 		car2 := car.NewCar("BBB222")
 		_, _ = parkingLot.Park(car1)
 		_, _ = parkingLot.Park(car2)
 
-		// Try parking a third car, should fail
 		car3 := car.NewCar("CCC333")
 		_, err := parkingLot.Park(car3)
 
