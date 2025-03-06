@@ -1,22 +1,22 @@
-package main
+package models
 
 type ParkingAttendant struct {
-	name       string
-	parkingLot *ParkingLot
+	Name        string
+	ParkingLots []*ParkingLot
 }
 
 type ParkingLot struct {
 	// [ticketNumber]plateNumber
-	parkedCars map[string]string
+	ParkedCars map[string]string
 	// [ticketNumber]bool to mark if a ticket has been used
-	usedTickets map[string]bool
-	capacity    int
+	UsedTickets map[string]bool
+	Capacity    int
 }
 
 type Car struct {
-	licensePlate string
+	LicensePlate string
 }
 
 type Ticket struct {
-	ticketNumber string
+	TicketNumber string
 }

@@ -1,20 +1,36 @@
 package main
 
-func NewParkingAttendant(name string, parkingLot *ParkingLot) *ParkingAttendant {
+import (
+	"github.com/natanaelrusli/parking-lot/errors"
+	"github.com/natanaelrusli/parking-lot/models"
+)
+
+type ParkingAttendant struct {
+	Name        string
+	ParkingLots []*ParkingLot
+}
+
+func NewParkingAttendant(name string, parkingLots []*ParkingLot) *ParkingAttendant {
 	return &ParkingAttendant{
-		name:       name,
-		parkingLot: parkingLot,
+		Name:        name,
+		ParkingLots: parkingLots,
 	}
 }
 
 func (a *ParkingAttendant) GetName() string {
-	return a.name
+	return a.Name
 }
 
-func (a *ParkingAttendant) ParkCar(car *Car) (*Ticket, error) {
-	return a.parkingLot.Park(car)
+func (a *ParkingAttendant) ParkCar(car *models.Car) (*models.Ticket, error) {
+	for _, lot := range a.ParkingLots {
+		if len(lot.ParkedCars) < lot.Capacity {
+			return lot.Park(car)
+		}
+	}
+
+	return nil, errors.ErrAllLotsAreFull
 }
 
-func (a *ParkingAttendant) UnparkCar(ticket *Ticket) (*Car, error) {
-	return a.parkingLot.Unpark(ticket)
+func (a *ParkingAttendant) UnparkCar(ticket *models.Ticket) (*models.Car, error) {
+	return a.ParkingLots[0].Unpark(ticket)
 }

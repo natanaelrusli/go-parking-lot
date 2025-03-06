@@ -1,92 +1,93 @@
 package main
 
-import "errors"
+import (
+	"github.com/natanaelrusli/parking-lot/errors"
+	"github.com/natanaelrusli/parking-lot/models"
+)
+
+type ParkingLot struct {
+	*models.ParkingLot
+}
 
 func NewParkingLot(capacity int) *ParkingLot {
 	return &ParkingLot{
-		parkedCars:  make(map[string]string),
-		usedTickets: make(map[string]bool),
-		capacity:    capacity,
+		ParkingLot: &models.ParkingLot{
+			ParkedCars:  make(map[string]string),
+			UsedTickets: make(map[string]bool),
+			Capacity:    capacity,
+		},
 	}
 }
 
-func (p *ParkingLot) checkCarExist(car *Car) bool {
-	for _, plateNumber := range p.parkedCars {
-		if plateNumber == car.licensePlate {
+func (p *ParkingLot) checkCarExist(car *models.Car) bool {
+	for _, plateNumber := range p.ParkedCars {
+		if plateNumber == car.LicensePlate {
 			return true
 		}
 	}
-
 	return false
 }
 
-func (p *ParkingLot) Park(car *Car) (*Ticket, error) {
+func (p *ParkingLot) Park(car *models.Car) (*models.Ticket, error) {
 	if car == nil {
-		return nil, errors.New("cannot park nil car")
+		return nil, errors.ErrNilCar
 	}
 
-	if car.licensePlate == "" {
-		return nil, errors.New("cannot park without license plate")
+	if car.LicensePlate == "" {
+		return nil, errors.ErrEmptyLicensePlate
 	}
 
-	if len(p.parkedCars) >= p.capacity {
-		return nil, errors.New("no available position")
+	if len(p.ParkedCars) >= p.Capacity {
+		return nil, errors.ErrNoAvailablePosition
 	}
 
-	// Check if car is already parked by searching through values
 	if p.checkCarExist(car) {
-		return nil, errors.New("car already parked")
+		return nil, errors.ErrCarAlreadyParked
 	}
 
 	ticketNumber := generateTicketNumber()
-	p.parkedCars[ticketNumber] = car.licensePlate
+	p.ParkedCars[ticketNumber] = car.LicensePlate
 
-	return &Ticket{
-		ticketNumber: ticketNumber,
+	return &models.Ticket{
+		TicketNumber: ticketNumber,
 	}, nil
 }
 
 func (p *ParkingLot) GetCapacity() int {
-	return p.capacity
+	return p.Capacity
 }
 
-func (p *ParkingLot) CheckCarExists(licensePlate string) bool {
-	_, exists := p.parkedCars[licensePlate]
-	return exists
-}
-
-func (p *ParkingLot) GetParkedCars(ticket *Ticket) *Car {
-	licensePlate, exists := p.parkedCars[ticket.ticketNumber]
+func (p *ParkingLot) GetParkedCars(ticket *models.Ticket) *models.Car {
+	licensePlate, exists := p.ParkedCars[ticket.TicketNumber]
 	if !exists {
 		return nil
 	}
 
-	return &Car{
-		licensePlate: licensePlate,
+	return &models.Car{
+		LicensePlate: licensePlate,
 	}
 }
 
-func (p *ParkingLot) Unpark(ticket *Ticket) (*Car, error) {
+func (p *ParkingLot) Unpark(ticket *models.Ticket) (*models.Car, error) {
 	if ticket == nil {
-		return nil, errors.New("cannot unpark without ticket")
+		return nil, errors.ErrNilTicket
 	}
 
-	if ticket.ticketNumber == "" {
-		return nil, errors.New("cannot unpark without ticket number")
+	if ticket.TicketNumber == "" {
+		return nil, errors.ErrEmptyTicketNumber
 	}
 
-	if p.usedTickets[ticket.ticketNumber] {
-		return nil, errors.New("unrecognized parking ticket")
+	if p.UsedTickets[ticket.TicketNumber] {
+		return nil, errors.ErrUnrecognizedTicket
 	}
 
 	car := p.GetParkedCars(ticket)
-
 	if car == nil {
-		return nil, errors.New("unrecognized parking ticket")
+		return nil, errors.ErrUnrecognizedTicket
 	}
 
-	delete(p.parkedCars, ticket.ticketNumber)
-	p.usedTickets[ticket.ticketNumber] = true
+	delete(p.ParkedCars, ticket.TicketNumber)
+	p.UsedTickets[ticket.TicketNumber] = true
 
 	return car, nil
 }
