@@ -5,6 +5,7 @@ import (
 
 	"github.com/natanaelrusli/parking-lot/car"
 	"github.com/natanaelrusli/parking-lot/errors"
+	"github.com/natanaelrusli/parking-lot/models"
 	"github.com/natanaelrusli/parking-lot/parkinglot"
 )
 
@@ -70,6 +71,37 @@ func TestParkingAttendant(t *testing.T) {
 		_, err = attendant.ParkCar(car3)
 		if err != errors.ErrAllLotsAreFull {
 			t.Errorf("Expected error %v when all lots are full, got %v", errors.ErrAllLotsAreFull, err)
+		}
+	})
+}
+
+func TestPreventDoubleParking(t *testing.T) {
+	t.Run("should not allow parking the same car twice", func(t *testing.T) {
+		lot1 := parkinglot.New(10)
+		lot2 := parkinglot.New(10)
+
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{lot1, lot2})
+
+		car := car.NewCar("AAA111")
+		_, _ = attendant.ParkCar(car)
+		_, err := attendant.ParkCar(car)
+
+		if err != errors.ErrCarAlreadyParked {
+			t.Errorf("Expected error %v, got %v", errors.ErrCarAlreadyParked, err)
+		}
+	})
+
+	t.Run("should not allow unparking with invalid ticket", func(t *testing.T) {
+		lot1 := parkinglot.New(10)
+		lot2 := parkinglot.New(10)
+
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{lot1, lot2})
+
+		invalidTicket := &models.Ticket{TicketNumber: "INVALID"}
+		_, err := attendant.UnparkCar(invalidTicket)
+
+		if err != errors.ErrTicketNotFound {
+			t.Errorf("Expected error %v, got %v", errors.ErrTicketNotFound, err)
 		}
 	})
 }

@@ -15,6 +15,7 @@ type ParkingAttendantItf interface {
 	GetName() string
 	ParkCar(car *models.Car) (*models.Ticket, error)
 	UnparkCar(ticket *models.Ticket) (*models.Car, error)
+	isCarParkedAnywhere(car *models.Car) bool
 }
 
 func NewParkingAttendant(name string, parkingLots []*parkinglot.ParkingLot) ParkingAttendantItf {
@@ -29,8 +30,12 @@ func (a *ParkingAttendant) GetName() string {
 }
 
 func (a *ParkingAttendant) ParkCar(car *models.Car) (*models.Ticket, error) {
+	if a.isCarParkedAnywhere(car) {
+		return nil, errors.ErrCarAlreadyParked
+	}
+
 	for _, lot := range a.ParkingLots {
-		if len(lot.ParkedCars) < lot.GetCapacity() {
+		if !lot.IsFull() {
 			return lot.Park(car)
 		}
 	}
@@ -44,4 +49,16 @@ func (a *ParkingAttendant) UnparkCar(ticket *models.Ticket) (*models.Car, error)
 		}
 	}
 	return nil, errors.ErrTicketNotFound
+}
+
+func (a *ParkingAttendant) isCarParkedAnywhere(car *models.Car) bool {
+	for _, lot := range a.ParkingLots {
+		for _, plateNumber := range lot.ParkedCars {
+			if plateNumber == car.LicensePlate {
+				return true
+			}
+		}
+	}
+
+	return false
 }

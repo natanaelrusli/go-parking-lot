@@ -29,6 +29,10 @@ func (p *ParkingLot) checkCarExist(car *models.Car) bool {
 	return false
 }
 
+func (p *ParkingLot) IsFull() bool {
+	return len(p.ParkedCars) >= p.Capacity
+}
+
 func (p *ParkingLot) Park(car *models.Car) (*models.Ticket, error) {
 	if car == nil {
 		return nil, errors.ErrNilCar
