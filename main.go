@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"github.com/natanaelrusli/parking-lot/cli"
+)
 
 func main() {
-	fmt.Println("Parking Lot")
+	parkingLotCLI := cli.NewParkingLotCLI()
+	parkingLotCLI.Start()
 }

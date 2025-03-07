@@ -24,6 +24,7 @@ type ParkingAttendantItf interface {
 	GetAllAvailableLots() map[string]bool
 	AssignParkingLot(lot *parkinglot.ParkingLot)
 	ChangeParkingStrategy(strategy parking_styles.ParkingStyleStrategy)
+	GetParkingLots() []*parkinglot.ParkingLot
 }
 
 func NewParkingAttendant(name string, parkingLots []*parkinglot.ParkingLot) ParkingAttendantItf {
@@ -41,6 +42,10 @@ func NewParkingAttendant(name string, parkingLots []*parkinglot.ParkingLot) Park
 
 func (a *ParkingAttendant) ChangeParkingStrategy(strategy parking_styles.ParkingStyleStrategy) {
 	a.ParkingStyle = strategy
+}
+
+func (a *ParkingAttendant) GetParkingLots() []*parkinglot.ParkingLot {
+	return a.ParkingLots
 }
 
 func (a *ParkingAttendant) AssignParkingLot(lot *parkinglot.ParkingLot) {
