@@ -25,6 +25,7 @@ type ParkingLotItf interface {
 	CalculateFee(duration time.Duration) float64
 	GetId() string
 	ChangeFeeStrategy(strategy fee.ParkingFeeStrategy)
+	GetParkedCarCount() int
 }
 
 func New(capacity int) ParkingLotItf {
@@ -44,6 +45,10 @@ func New(capacity int) ParkingLotItf {
 
 func (p *ParkingLot) ChangeFeeStrategy(strategy fee.ParkingFeeStrategy) {
 	p.FeeStrategy = strategy
+}
+
+func (p *ParkingLot) GetParkedCarCount() int {
+	return len(p.ParkedCars)
 }
 
 func (p *ParkingLot) checkCarExist(car *models.Car) bool {

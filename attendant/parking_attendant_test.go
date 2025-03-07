@@ -202,3 +202,69 @@ func TestAttendantAvailableLots(t *testing.T) {
 		assert.Equal(t, allAvailableLot[pl1.(*parkinglot.ParkingLot).ID], true)
 	})
 }
+
+func TestParkingStyle(t *testing.T) {
+	t.Run("should park in first available lot", func(t *testing.T) {
+		pl1 := parkinglot.New(2)
+		pl2 := parkinglot.New(3)
+
+		c1 := car.NewCar("B7676POO")
+
+		att := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot), pl2.(*parkinglot.ParkingLot),
+		})
+
+		att.ParkCar(c1)
+
+		count1 := pl1.GetParkedCarCount()
+		count2 := pl2.GetParkedCarCount()
+
+		assert.Equal(t, 1, count1)
+		assert.Equal(t, 0, count2)
+	})
+
+	t.Run("should park in lot with highest capacity", func(t *testing.T) {
+		pl1 := parkinglot.New(2)
+		pl2 := parkinglot.New(3)
+
+		c1 := car.NewCar("B7676POO")
+
+		att := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot), pl2.(*parkinglot.ParkingLot),
+		})
+
+		att.SetParkingStrategy("capacity")
+
+		att.ParkCar(c1)
+
+		count1 := pl1.GetParkedCarCount()
+		count2 := pl2.GetParkedCarCount()
+
+		assert.Equal(t, 0, count1)
+		assert.Equal(t, 1, count2)
+	})
+
+	t.Run("should park in lot with highest free space", func(t *testing.T) {
+		pl1 := parkinglot.New(2)
+		pl2 := parkinglot.New(2)
+
+		c0 := car.NewCar("RI1")
+		c1 := car.NewCar("B7676POO")
+
+		pl1.Park(c0)
+
+		att := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot), pl2.(*parkinglot.ParkingLot),
+		})
+
+		att.SetParkingStrategy("space")
+
+		att.ParkCar(c1)
+
+		count1 := pl1.GetParkedCarCount()
+		count2 := pl2.GetParkedCarCount()
+
+		assert.Equal(t, 1, count1)
+		assert.Equal(t, 1, count2)
+	})
+}
