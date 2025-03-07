@@ -117,6 +117,7 @@ func (p *ParkingLot) Park(car *models.Car) (*models.Ticket, error) {
 
 	return &models.Ticket{
 		TicketNumber: ticketNumber,
+		EntryTime:    time.Now(),
 	}, nil
 }
 

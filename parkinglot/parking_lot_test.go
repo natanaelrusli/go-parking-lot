@@ -157,3 +157,39 @@ func TestParkingLotFeeStrategy(t *testing.T) {
 		assert.Equal(t, f, float64(200))
 	})
 }
+
+func TestTicketDuration(t *testing.T) {
+	t.Run("should return correct entry hour", func(t *testing.T) {
+		pl := New(1)
+		c1 := car.NewCar("B6788PPP")
+		ticket, err := pl.Park(c1)
+
+		assert.NotNil(t, ticket)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ticket.EntryTime.Hour(), time.Now().Hour())
+	})
+
+	t.Run("should calculate correct duration", func(t *testing.T) {
+		pl := New(1)
+		c1 := car.NewCar("B6788PPP")
+		ticket, err := pl.Park(c1)
+
+		assert.NotNil(t, ticket)
+		assert.NoError(t, err)
+
+		// Simulate that the car was parked 2 hours ago
+		ticket.EntryTime = time.Now().Add(-2 * time.Hour)
+
+		_, err = pl.Unpark(ticket)
+		assert.NoError(t, err)
+
+		// Calculate duration
+		duration := time.Since(ticket.EntryTime)
+
+		// Assume parking fee is $10 per hour
+		pfee := pl.CalculateFee(duration)
+		assert.Equal(t, int(pfee), 2*10)
+	})
+
+}

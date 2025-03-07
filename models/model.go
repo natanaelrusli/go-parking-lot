@@ -1,6 +1,10 @@
 package models
 
-import "github.com/natanaelrusli/parking-lot/fee"
+import (
+	"time"
+
+	"github.com/natanaelrusli/parking-lot/fee"
+)
 
 type ParkingAttendant struct {
 	Name        string
@@ -37,4 +41,5 @@ type Car struct {
 
 type Ticket struct {
 	TicketNumber string
+	EntryTime    time.Time
 }
