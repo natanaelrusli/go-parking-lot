@@ -4,12 +4,14 @@ import (
 	"github.com/natanaelrusli/parking-lot/errors"
 	"github.com/natanaelrusli/parking-lot/models"
 	"github.com/natanaelrusli/parking-lot/parkinglot"
+	parking_styles "github.com/natanaelrusli/parking-lot/parkingstyles"
 )
 
 type ParkingAttendant struct {
 	Name          string
 	ParkingLots   []*parkinglot.ParkingLot
 	AvailableLots map[string]bool
+	ParkingStyle  parking_styles.ParkingStyleStrategy
 }
 
 type ParkingAttendantItf interface {
@@ -21,6 +23,7 @@ type ParkingAttendantItf interface {
 	OnParkingLotStatusChanged(status models.ParkingLotStatus)
 	GetAllAvailableLots() map[string]bool
 	AssignParkingLot(lot *parkinglot.ParkingLot)
+	ChangeParkingStrategy(strategy parking_styles.ParkingStyleStrategy)
 }
 
 func NewParkingAttendant(name string, parkingLots []*parkinglot.ParkingLot) ParkingAttendantItf {
@@ -34,6 +37,10 @@ func NewParkingAttendant(name string, parkingLots []*parkinglot.ParkingLot) Park
 		ParkingLots:   parkingLots,
 		AvailableLots: availableLots,
 	}
+}
+
+func (a *ParkingAttendant) ChangeParkingStrategy(strategy parking_styles.ParkingStyleStrategy) {
+	a.ParkingStyle = strategy
 }
 
 func (a *ParkingAttendant) AssignParkingLot(lot *parkinglot.ParkingLot) {
@@ -69,6 +76,12 @@ func (a *ParkingAttendant) ParkCar(car *models.Car) (*models.Ticket, error) {
 		return nil, errors.ErrCarAlreadyParked
 	}
 
+	// if a parking style is choosen
+	if a.ParkingStyle != nil {
+		return a.ParkingStyle.GetLot(a.ParkingLots).Park(car)
+	}
+
+	// if no parking style choosen, attendant will prioritize any first lot available
 	for _, lot := range a.ParkingLots {
 		if !lot.IsFull() {
 			return lot.Park(car)

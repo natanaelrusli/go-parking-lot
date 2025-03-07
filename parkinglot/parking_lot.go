@@ -20,6 +20,7 @@ type ParkingLotItf interface {
 	Unpark(ticket *models.Ticket) (*models.Car, error)
 	GetCapacity() int
 	GetParkedCars(ticket *models.Ticket) *models.Car
+	GetParkedCarCount() int
 	IsFull() bool
 	AddObserver(observer models.ParkingLotObserver)
 	CalculateFee(duration time.Duration) float64
@@ -44,6 +45,10 @@ func New(capacity int) ParkingLotItf {
 
 func (p *ParkingLot) ChangeFeeStrategy(strategy fee.ParkingFeeStrategy) {
 	p.FeeStrategy = strategy
+}
+
+func (p *ParkingLot) GetParkedCarCount() int {
+	return len(p.ParkedCars)
 }
 
 func (p *ParkingLot) checkCarExist(car *models.Car) bool {

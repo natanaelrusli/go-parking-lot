@@ -7,6 +7,7 @@ import (
 	"github.com/natanaelrusli/parking-lot/errors"
 	"github.com/natanaelrusli/parking-lot/models"
 	"github.com/natanaelrusli/parking-lot/parkinglot"
+	parking_styles "github.com/natanaelrusli/parking-lot/parkingstyles"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -114,6 +115,56 @@ func TestPreventDoubleParking(t *testing.T) {
 		if err != errors.ErrTicketNotFound {
 			t.Errorf("Expected error %v, got %v", errors.ErrTicketNotFound, err)
 		}
+	})
+
+	t.Run("should be able to park in lot with highest cap", func(t *testing.T) {
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(10)
+		c1 := car.NewCar("B6565POP")
+
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+
+		assert.NotNil(t, attendant)
+
+		ps := parking_styles.NewMostCapacityStrategy()
+
+		attendant.ChangeParkingStrategy(ps)
+		ticket, err := attendant.ParkCar(c1)
+
+		assert.NotNil(t, ticket)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 0, lot1.GetParkedCarCount())
+		assert.Equal(t, 1, lot2.GetParkedCarCount())
+	})
+
+	t.Run("should be able to park in lot with highest free space", func(t *testing.T) {
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(5)
+		c0 := car.NewCar("RI1")
+		c1 := car.NewCar("B6565POP")
+		lot1.Park(c0)
+
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+
+		assert.NotNil(t, attendant)
+
+		ps := parking_styles.NewMostFreeSpaceStrategy()
+
+		attendant.ChangeParkingStrategy(ps)
+		ticket, err := attendant.ParkCar(c1)
+
+		assert.NotNil(t, ticket)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 1, lot1.GetParkedCarCount())
+		assert.Equal(t, 1, lot2.GetParkedCarCount())
 	})
 }
 
