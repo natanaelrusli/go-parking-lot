@@ -7,6 +7,7 @@ import (
 	"github.com/natanaelrusli/parking-lot/errors"
 	"github.com/natanaelrusli/parking-lot/models"
 	"github.com/natanaelrusli/parking-lot/parkinglot"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParkingAttendant(t *testing.T) {
@@ -103,5 +104,85 @@ func TestPreventDoubleParking(t *testing.T) {
 		if err != errors.ErrTicketNotFound {
 			t.Errorf("Expected error %v, got %v", errors.ErrTicketNotFound, err)
 		}
+	})
+}
+
+func TestAttendantAvailableLots(t *testing.T) {
+	t.Run("should have all lots as available initially", func(t *testing.T) {
+		// arrange
+		pl1 := parkinglot.New(2)
+		pl2 := parkinglot.New(2)
+
+		// act
+		attendant := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1, pl2})
+		al := attendant.GetAvailableLotsLen()
+
+		// assert
+		assert.Equal(t, al, 2)
+	})
+
+	t.Run("should have remove full lot from availableLots list", func(t *testing.T) {
+		// arrange
+		pl1 := parkinglot.New(1)
+		pl2 := parkinglot.New(2)
+		c1 := car.NewCar("B92728POS")
+		attendant := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1, pl2})
+		pl1.AddObserver(attendant)
+
+		// act
+		attendant.ParkCar(c1)
+		al := attendant.GetAvailableLotsLen()
+
+		// assert
+		assert.Equal(t, al, 1)
+	})
+
+	t.Run("should not notify a non subscriber", func(t *testing.T) {
+		// arrange
+		pl1 := parkinglot.New(1)
+		c1 := car.NewCar("B8888POP")
+		at1 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1})
+		at2 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1})
+		pl1.AddObserver(at1)
+
+		// act
+		at1.ParkCar(c1)
+		al1 := at1.GetAvailableLotsLen()
+		al2 := at2.GetAvailableLotsLen()
+
+		// assert
+		assert.Equal(t, al1, 0)
+		assert.Equal(t, al2, 1)
+	})
+
+	t.Run("should be notified when a parking lot become available or at least have 1 available space", func(t *testing.T) {
+		// arrange
+		pl1 := parkinglot.New(1)
+		c1 := car.NewCar("B8888POP")
+		at1 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1})
+		pl1.AddObserver(at1)
+
+		// act
+		ticket1, err := at1.ParkCar(c1)
+		al1 := at1.GetAvailableLotsLen()
+
+		// assert
+		assert.Equal(t, al1, 0)
+		assert.NotNil(t, ticket1)
+		assert.NoError(t, err)
+		allAvailableLot := at1.GetAllAvailableLots()
+		assert.Equal(t, allAvailableLot[pl1.ID], false)
+
+		// act
+		returnedCar1, err := at1.UnparkCar(ticket1)
+		al1 = at1.GetAvailableLotsLen()
+
+		// assert
+		assert.Equal(t, al1, 1)
+		assert.NotNil(t, returnedCar1)
+		assert.NoError(t, err)
+
+		allAvailableLot = at1.GetAllAvailableLots()
+		assert.Equal(t, allAvailableLot[pl1.ID], true)
 	})
 }

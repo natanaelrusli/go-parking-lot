@@ -7,8 +7,9 @@ import (
 )
 
 type ParkingAttendant struct {
-	Name        string
-	ParkingLots []*parkinglot.ParkingLot
+	Name          string
+	ParkingLots   []*parkinglot.ParkingLot
+	AvailableLots map[string]bool
 }
 
 type ParkingAttendantItf interface {
@@ -16,17 +17,46 @@ type ParkingAttendantItf interface {
 	ParkCar(car *models.Car) (*models.Ticket, error)
 	UnparkCar(ticket *models.Ticket) (*models.Car, error)
 	isCarParkedAnywhere(car *models.Car) bool
+	GetAvailableLotsLen() int
+	OnParkingLotStatusChanged(status models.ParkingLotStatus)
+	GetAllAvailableLots() map[string]bool
 }
 
 func NewParkingAttendant(name string, parkingLots []*parkinglot.ParkingLot) ParkingAttendantItf {
+	availableLots := make(map[string]bool)
+	for _, v := range parkingLots {
+		availableLots[v.ID] = true
+	}
+
 	return &ParkingAttendant{
-		Name:        name,
-		ParkingLots: parkingLots,
+		Name:          name,
+		ParkingLots:   parkingLots,
+		AvailableLots: availableLots,
+	}
+}
+
+func (a *ParkingAttendant) OnParkingLotStatusChanged(status models.ParkingLotStatus) {
+	if status.IsFull {
+		delete(a.AvailableLots, status.LotID)
+		return
+	}
+
+	if !status.IsFull && status.Available == 1 {
+		a.AvailableLots[status.LotID] = true
+		return
 	}
 }
 
 func (a *ParkingAttendant) GetName() string {
 	return a.Name
+}
+
+func (a *ParkingAttendant) GetAvailableLotsLen() int {
+	return len(a.AvailableLots)
+}
+
+func (a *ParkingAttendant) GetAllAvailableLots() map[string]bool {
+	return a.AvailableLots
 }
 
 func (a *ParkingAttendant) ParkCar(car *models.Car) (*models.Ticket, error) {
