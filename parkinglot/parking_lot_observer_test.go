@@ -182,8 +182,8 @@ func TestParkingLotObserverNotifications(t *testing.T) {
 		}
 
 		notification := observer.notifications[0]
-		if notification.LotID != parkingLot.ID {
-			t.Errorf("Expected lot ID %s, got %s", parkingLot.ID, notification.LotID)
+		if notification.LotID != parkingLot.GetId() {
+			t.Errorf("Expected lot ID %s, got %s", parkingLot.GetId(), notification.LotID)
 		}
 	})
 

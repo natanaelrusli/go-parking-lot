@@ -13,7 +13,8 @@ import (
 func TestParkingAttendant(t *testing.T) {
 	t.Run("should be able to park cars", func(t *testing.T) {
 		parkingLot := parkinglot.New(10)
-		parkingAttendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{parkingLot})
+		parkingAttendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{})
+		parkingAttendant.AssignParkingLot(parkingLot.(*parkinglot.ParkingLot))
 
 		car := car.NewCar("AAA111")
 		ticket, err := parkingAttendant.ParkCar(car)
@@ -29,7 +30,7 @@ func TestParkingAttendant(t *testing.T) {
 
 	t.Run("should be able to unpark cars", func(t *testing.T) {
 		parkingLot := parkinglot.New(10)
-		parkingAttendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{parkingLot})
+		parkingAttendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{parkingLot.(*parkinglot.ParkingLot)})
 
 		car := car.NewCar("AAA111")
 		ticket, _ := parkingAttendant.ParkCar(car)
@@ -44,7 +45,10 @@ func TestParkingAttendant(t *testing.T) {
 	t.Run("should park cars in next lot when first lot is full", func(t *testing.T) {
 		lot1 := parkinglot.New(1)
 		lot2 := parkinglot.New(1)
-		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{lot1, lot2})
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
 
 		car1 := car.NewCar("AAA111")
 		car2 := car.NewCar("BBB222")
@@ -81,7 +85,10 @@ func TestPreventDoubleParking(t *testing.T) {
 		lot1 := parkinglot.New(10)
 		lot2 := parkinglot.New(10)
 
-		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{lot1, lot2})
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
 
 		car := car.NewCar("AAA111")
 		_, _ = attendant.ParkCar(car)
@@ -96,7 +103,10 @@ func TestPreventDoubleParking(t *testing.T) {
 		lot1 := parkinglot.New(10)
 		lot2 := parkinglot.New(10)
 
-		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{lot1, lot2})
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
 
 		invalidTicket := &models.Ticket{TicketNumber: "INVALID"}
 		_, err := attendant.UnparkCar(invalidTicket)
@@ -114,7 +124,10 @@ func TestAttendantAvailableLots(t *testing.T) {
 		pl2 := parkinglot.New(2)
 
 		// act
-		attendant := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1, pl2})
+		attendant := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot),
+			pl2.(*parkinglot.ParkingLot),
+		})
 		al := attendant.GetAvailableLotsLen()
 
 		// assert
@@ -126,7 +139,10 @@ func TestAttendantAvailableLots(t *testing.T) {
 		pl1 := parkinglot.New(1)
 		pl2 := parkinglot.New(2)
 		c1 := car.NewCar("B92728POS")
-		attendant := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1, pl2})
+		attendant := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot),
+			pl2.(*parkinglot.ParkingLot),
+		})
 		pl1.AddObserver(attendant)
 
 		// act
@@ -141,8 +157,8 @@ func TestAttendantAvailableLots(t *testing.T) {
 		// arrange
 		pl1 := parkinglot.New(1)
 		c1 := car.NewCar("B8888POP")
-		at1 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1})
-		at2 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1})
+		at1 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1.(*parkinglot.ParkingLot)})
+		at2 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1.(*parkinglot.ParkingLot)})
 		pl1.AddObserver(at1)
 
 		// act
@@ -159,7 +175,7 @@ func TestAttendantAvailableLots(t *testing.T) {
 		// arrange
 		pl1 := parkinglot.New(1)
 		c1 := car.NewCar("B8888POP")
-		at1 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1})
+		at1 := NewParkingAttendant("sule", []*parkinglot.ParkingLot{pl1.(*parkinglot.ParkingLot)})
 		pl1.AddObserver(at1)
 
 		// act
@@ -171,7 +187,7 @@ func TestAttendantAvailableLots(t *testing.T) {
 		assert.NotNil(t, ticket1)
 		assert.NoError(t, err)
 		allAvailableLot := at1.GetAllAvailableLots()
-		assert.Equal(t, allAvailableLot[pl1.ID], false)
+		assert.Equal(t, allAvailableLot[pl1.(*parkinglot.ParkingLot).ID], false)
 
 		// act
 		returnedCar1, err := at1.UnparkCar(ticket1)
@@ -183,6 +199,6 @@ func TestAttendantAvailableLots(t *testing.T) {
 		assert.NoError(t, err)
 
 		allAvailableLot = at1.GetAllAvailableLots()
-		assert.Equal(t, allAvailableLot[pl1.ID], true)
+		assert.Equal(t, allAvailableLot[pl1.(*parkinglot.ParkingLot).ID], true)
 	})
 }

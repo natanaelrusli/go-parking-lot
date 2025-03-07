@@ -1,5 +1,7 @@
 package models
 
+import "github.com/natanaelrusli/parking-lot/fee"
+
 type ParkingAttendant struct {
 	Name        string
 	ParkingLots []*ParkingLot
@@ -26,6 +28,7 @@ type ParkingLot struct {
 	Capacity    int
 	// List of observers
 	Subscribers []ParkingLotObserver
+	FeeStrategy fee.ParkingFeeStrategy
 }
 
 type Car struct {

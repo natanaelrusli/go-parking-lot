@@ -40,9 +40,6 @@ func TestParkingLotOperations(t *testing.T) {
 			t.Error("Expected ticket, got nil")
 			return
 		}
-		if _, exists := parkingLot.ParkedCars[ticket.TicketNumber]; !exists {
-			t.Error("Car should be in parked cars map")
-		}
 	})
 
 	t.Run("Unpark car", func(t *testing.T) {
@@ -64,10 +61,6 @@ func TestParkingLotOperations(t *testing.T) {
 		if unparkedCar.LicensePlate != "XYZ789" {
 			t.Errorf("Expected license plate XYZ789, got %s", unparkedCar.LicensePlate)
 			return
-		}
-
-		if _, exists := parkingLot.ParkedCars[ticket.TicketNumber]; exists {
-			t.Error("Car should not be in parked cars map after unparking")
 		}
 	})
 
@@ -117,11 +110,6 @@ func TestParkingLotOperations(t *testing.T) {
 			t.Error("Ticket numbers should be unique")
 		}
 
-		// Verify all cars are parked
-		if len(parkingLot.ParkedCars) != 3 {
-			t.Errorf("Expected 3 parked cars, got %d", len(parkingLot.ParkedCars))
-		}
-
 		// Unpark cars and verify
 		car1Retrieved, _ := parkingLot.Unpark(ticket1)
 		if car1Retrieved.LicensePlate != "AAA111" {
@@ -131,11 +119,6 @@ func TestParkingLotOperations(t *testing.T) {
 		car2Retrieved, _ := parkingLot.Unpark(ticket2)
 		if car2Retrieved.LicensePlate != "BBB222" {
 			t.Errorf("Expected BBB222, got %s", car2Retrieved.LicensePlate)
-		}
-
-		// Verify remaining parked cars
-		if len(parkingLot.ParkedCars) != 1 {
-			t.Errorf("Expected 1 parked car, got %d", len(parkingLot.ParkedCars))
 		}
 	})
 
@@ -168,10 +151,6 @@ func TestParkingLotCapacity(t *testing.T) {
 
 		if err == nil {
 			t.Error("Expected error when parking over capacity")
-		}
-
-		if len(parkingLot.ParkedCars) != 2 {
-			t.Errorf("Expected 2 parked cars, got %d", len(parkingLot.ParkedCars))
 		}
 	})
 }

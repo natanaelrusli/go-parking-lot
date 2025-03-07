@@ -2,9 +2,11 @@ package parkinglot
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/natanaelrusli/parking-lot/errors"
+	"github.com/natanaelrusli/parking-lot/fee"
 	"github.com/natanaelrusli/parking-lot/models"
 	"github.com/natanaelrusli/parking-lot/ticket"
 )
@@ -13,7 +15,21 @@ type ParkingLot struct {
 	*models.ParkingLot
 }
 
-func New(capacity int) *ParkingLot {
+type ParkingLotItf interface {
+	Park(car *models.Car) (*models.Ticket, error)
+	Unpark(ticket *models.Ticket) (*models.Car, error)
+	GetCapacity() int
+	GetParkedCars(ticket *models.Ticket) *models.Car
+	IsFull() bool
+	AddObserver(observer models.ParkingLotObserver)
+	CalculateFee(duration time.Duration) float64
+	GetId() string
+	ChangeFeeStrategy(strategy fee.ParkingFeeStrategy)
+}
+
+func New(capacity int) ParkingLotItf {
+	hourlystrategy := fee.NewHourlyFeeStrategy(10.0)
+
 	return &ParkingLot{
 		ParkingLot: &models.ParkingLot{
 			ID:          uuid.New().String()[:8],
@@ -21,8 +37,13 @@ func New(capacity int) *ParkingLot {
 			UsedTickets: make(map[string]bool),
 			Capacity:    capacity,
 			Subscribers: []models.ParkingLotObserver{},
+			FeeStrategy: hourlystrategy,
 		},
 	}
+}
+
+func (p *ParkingLot) ChangeFeeStrategy(strategy fee.ParkingFeeStrategy) {
+	p.FeeStrategy = strategy
 }
 
 func (p *ParkingLot) checkCarExist(car *models.Car) bool {
@@ -32,6 +53,10 @@ func (p *ParkingLot) checkCarExist(car *models.Car) bool {
 		}
 	}
 	return false
+}
+
+func (p *ParkingLot) GetId() string {
+	return p.ID
 }
 
 func (p *ParkingLot) IsFull() bool {
@@ -135,4 +160,8 @@ func (p *ParkingLot) Unpark(ticket *models.Ticket) (*models.Car, error) {
 	p.notifyObservers()
 
 	return car, nil
+}
+
+func (p *ParkingLot) CalculateFee(duration time.Duration) float64 {
+	return p.FeeStrategy.CalculateFee(duration)
 }

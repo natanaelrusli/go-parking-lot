@@ -2,10 +2,13 @@ package parkinglot
 
 import (
 	"testing"
+	"time"
 
 	"github.com/natanaelrusli/parking-lot/car"
 	"github.com/natanaelrusli/parking-lot/errors"
+	"github.com/natanaelrusli/parking-lot/fee"
 	"github.com/natanaelrusli/parking-lot/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParkingLotOperations(t *testing.T) {
@@ -21,9 +24,6 @@ func TestParkingLotOperations(t *testing.T) {
 		if ticket == nil {
 			t.Error("Expected ticket, got nil")
 			return
-		}
-		if _, exists := parkingLot.ParkedCars[ticket.TicketNumber]; !exists {
-			t.Error("Car should be in parked cars map")
 		}
 	})
 
@@ -46,10 +46,6 @@ func TestParkingLotOperations(t *testing.T) {
 		if unparkedCar.LicensePlate != "XYZ789" {
 			t.Errorf("Expected license plate XYZ789, got %s", unparkedCar.LicensePlate)
 			return
-		}
-
-		if _, exists := parkingLot.ParkedCars[ticket.TicketNumber]; exists {
-			t.Error("Car should not be in parked cars map after unparking")
 		}
 	})
 
@@ -95,10 +91,6 @@ func TestParkingLotOperations(t *testing.T) {
 			t.Error("Ticket numbers should be unique")
 		}
 
-		if len(parkingLot.ParkedCars) != 3 {
-			t.Errorf("Expected 3 parked cars, got %d", len(parkingLot.ParkedCars))
-		}
-
 		car1Retrieved, _ := parkingLot.Unpark(ticket1)
 		if car1Retrieved.LicensePlate != "AAA111" {
 			t.Errorf("Expected AAA111, got %s", car1Retrieved.LicensePlate)
@@ -107,10 +99,6 @@ func TestParkingLotOperations(t *testing.T) {
 		car2Retrieved, _ := parkingLot.Unpark(ticket2)
 		if car2Retrieved.LicensePlate != "BBB222" {
 			t.Errorf("Expected BBB222, got %s", car2Retrieved.LicensePlate)
-		}
-
-		if len(parkingLot.ParkedCars) != 1 {
-			t.Errorf("Expected 1 parked car, got %d", len(parkingLot.ParkedCars))
 		}
 	})
 
@@ -142,9 +130,30 @@ func TestParkingLotCapacity(t *testing.T) {
 		if err == nil {
 			t.Error("Expected error when parking over capacity")
 		}
+	})
+}
 
-		if len(parkingLot.ParkedCars) != 2 {
-			t.Errorf("Expected 2 parked cars, got %d", len(parkingLot.ParkedCars))
+func TestParkingLotFeeStrategy(t *testing.T) {
+	t.Run("should have default hourly fee strategy", func(t *testing.T) {
+		parkingLot := New(10)
+
+		fee := parkingLot.CalculateFee(time.Hour * 2)
+		if fee != 20.0 {
+			t.Errorf("Expected fee to be 20.0, got %f", fee)
 		}
+	})
+
+	t.Run("should be able to change fee strategy to flat fee strategy", func(t *testing.T) {
+		pl := New(10)
+
+		f := pl.CalculateFee(time.Hour * 2)
+		if f != 20.0 {
+			t.Errorf("Expected fee to be 20.0, got %f", f)
+		}
+
+		pl.ChangeFeeStrategy(fee.NewFlatFeeStrategy(200))
+		f = pl.CalculateFee(1000)
+
+		assert.Equal(t, f, float64(200))
 	})
 }

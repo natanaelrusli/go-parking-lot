@@ -20,6 +20,7 @@ type ParkingAttendantItf interface {
 	GetAvailableLotsLen() int
 	OnParkingLotStatusChanged(status models.ParkingLotStatus)
 	GetAllAvailableLots() map[string]bool
+	AssignParkingLot(lot *parkinglot.ParkingLot)
 }
 
 func NewParkingAttendant(name string, parkingLots []*parkinglot.ParkingLot) ParkingAttendantItf {
@@ -33,6 +34,10 @@ func NewParkingAttendant(name string, parkingLots []*parkinglot.ParkingLot) Park
 		ParkingLots:   parkingLots,
 		AvailableLots: availableLots,
 	}
+}
+
+func (a *ParkingAttendant) AssignParkingLot(lot *parkinglot.ParkingLot) {
+	a.ParkingLots = append(a.ParkingLots, lot)
 }
 
 func (a *ParkingAttendant) OnParkingLotStatusChanged(status models.ParkingLotStatus) {
