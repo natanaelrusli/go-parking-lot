@@ -5,12 +5,27 @@ type ParkingAttendant struct {
 	ParkingLots []*ParkingLot
 }
 
+// The status data that gets passed to observers
+type ParkingLotStatus struct {
+	IsFull    bool
+	LotID     string
+	Capacity  int
+	Available int
+}
+
+// The Observer interface
+type ParkingLotObserver interface {
+	OnParkingLotStatusChanged(status ParkingLotStatus)
+}
+
+// The Subject (ParkingLot) containing list of observers
 type ParkingLot struct {
-	// [ticketNumber]plateNumber
-	ParkedCars map[string]string
-	// [ticketNumber]bool to mark if a ticket has been used
+	ID          string
+	ParkedCars  map[string]string
 	UsedTickets map[string]bool
 	Capacity    int
+	// List of observers
+	Subscribers []ParkingLotObserver
 }
 
 type Car struct {

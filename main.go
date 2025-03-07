@@ -1,9 +1,7 @@
 package main
 
-import (
-	"log"
-)
+import "fmt"
 
 func main() {
-	log.Println("Parking lot app!")
+	fmt.Println("Parking Lot")
 }
