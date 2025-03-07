@@ -7,7 +7,6 @@ import (
 	"github.com/natanaelrusli/parking-lot/errors"
 	"github.com/natanaelrusli/parking-lot/models"
 	"github.com/natanaelrusli/parking-lot/parkinglot"
-	parking_styles "github.com/natanaelrusli/parking-lot/parkingstyles"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -116,56 +115,6 @@ func TestPreventDoubleParking(t *testing.T) {
 			t.Errorf("Expected error %v, got %v", errors.ErrTicketNotFound, err)
 		}
 	})
-
-	t.Run("should be able to park in lot with highest cap", func(t *testing.T) {
-		lot1 := parkinglot.New(5)
-		lot2 := parkinglot.New(10)
-		c1 := car.NewCar("B6565POP")
-
-		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
-			lot1.(*parkinglot.ParkingLot),
-			lot2.(*parkinglot.ParkingLot),
-		})
-
-		assert.NotNil(t, attendant)
-
-		ps := parking_styles.NewMostCapacityStrategy()
-
-		attendant.ChangeParkingStrategy(ps)
-		ticket, err := attendant.ParkCar(c1)
-
-		assert.NotNil(t, ticket)
-		assert.NoError(t, err)
-
-		assert.Equal(t, 0, lot1.GetParkedCarCount())
-		assert.Equal(t, 1, lot2.GetParkedCarCount())
-	})
-
-	t.Run("should be able to park in lot with highest free space", func(t *testing.T) {
-		lot1 := parkinglot.New(5)
-		lot2 := parkinglot.New(5)
-		c0 := car.NewCar("RI1")
-		c1 := car.NewCar("B6565POP")
-		lot1.Park(c0)
-
-		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
-			lot1.(*parkinglot.ParkingLot),
-			lot2.(*parkinglot.ParkingLot),
-		})
-
-		assert.NotNil(t, attendant)
-
-		ps := parking_styles.NewMostFreeSpaceStrategy()
-
-		attendant.ChangeParkingStrategy(ps)
-		ticket, err := attendant.ParkCar(c1)
-
-		assert.NotNil(t, ticket)
-		assert.NoError(t, err)
-
-		assert.Equal(t, 1, lot1.GetParkedCarCount())
-		assert.Equal(t, 1, lot2.GetParkedCarCount())
-	})
 }
 
 func TestAttendantAvailableLots(t *testing.T) {
@@ -251,5 +200,71 @@ func TestAttendantAvailableLots(t *testing.T) {
 
 		allAvailableLot = at1.GetAllAvailableLots()
 		assert.Equal(t, allAvailableLot[pl1.(*parkinglot.ParkingLot).ID], true)
+	})
+}
+
+func TestParkingStyle(t *testing.T) {
+	t.Run("should park in first available lot", func(t *testing.T) {
+		pl1 := parkinglot.New(2)
+		pl2 := parkinglot.New(3)
+
+		c1 := car.NewCar("B7676POO")
+
+		att := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot), pl2.(*parkinglot.ParkingLot),
+		})
+
+		att.ParkCar(c1)
+
+		count1 := pl1.GetParkedCarCount()
+		count2 := pl2.GetParkedCarCount()
+
+		assert.Equal(t, 1, count1)
+		assert.Equal(t, 0, count2)
+	})
+
+	t.Run("should park in lot with highest capacity", func(t *testing.T) {
+		pl1 := parkinglot.New(2)
+		pl2 := parkinglot.New(3)
+
+		c1 := car.NewCar("B7676POO")
+
+		att := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot), pl2.(*parkinglot.ParkingLot),
+		})
+
+		att.SetParkingStrategy("capacity")
+
+		att.ParkCar(c1)
+
+		count1 := pl1.GetParkedCarCount()
+		count2 := pl2.GetParkedCarCount()
+
+		assert.Equal(t, 0, count1)
+		assert.Equal(t, 1, count2)
+	})
+
+	t.Run("should park in lot with highest free space", func(t *testing.T) {
+		pl1 := parkinglot.New(2)
+		pl2 := parkinglot.New(2)
+
+		c0 := car.NewCar("RI1")
+		c1 := car.NewCar("B7676POO")
+
+		pl1.Park(c0)
+
+		att := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot), pl2.(*parkinglot.ParkingLot),
+		})
+
+		att.SetParkingStrategy("space")
+
+		att.ParkCar(c1)
+
+		count1 := pl1.GetParkedCarCount()
+		count2 := pl2.GetParkedCarCount()
+
+		assert.Equal(t, 1, count1)
+		assert.Equal(t, 1, count2)
 	})
 }
