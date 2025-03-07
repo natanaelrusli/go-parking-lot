@@ -278,26 +278,37 @@ func TestParkingLotObserverWithMockery(t *testing.T) {
 		// assert
 		assert.NotNil(t, ticket)
 		assert.NoError(t, err)
+
+		// Ensures that the mocked method (OnParkingLotStatusChanged) was called with the expected arguments.
 		mockObserver.AssertExpectations(t)
 	})
 
-	t.Run("should notify observer when parking lot becomes full", func(t *testing.T) {
+	t.Run("should notify observer when parking lot becomes full and notify available spaces left when it is not full", func(t *testing.T) {
 		// arrange
-		pl1 := New(1)
+		pl1 := New(2)
 		mockObserver := mocks.NewParkingLotObserver(t)
+
 		mockObserver.On("OnParkingLotStatusChanged", mock.MatchedBy(func(status models.ParkingLotStatus) bool {
-			return status.IsFull
+			return !status.IsFull && status.Available == 1
+		})).Return(nil).Once()
+
+		mockObserver.On("OnParkingLotStatusChanged", mock.MatchedBy(func(status models.ParkingLotStatus) bool {
+			return status.IsFull && status.Available == 0
 		})).Return(nil).Once()
 
 		// add observer and perform action to trigger notify
 		pl1.AddObserver(mockObserver)
+
 		c1 := car.NewCar("B2534POZ")
+		c2 := car.NewCar("B2534POP")
 		ticket, err := pl1.Park(c1)
+		ticket2, err2 := pl1.Park(c2)
 
 		// assert
 		assert.NotNil(t, ticket)
 		assert.NoError(t, err)
 
-		// mockObserver.AssertExpectations(t)
+		assert.NotNil(t, ticket2)
+		assert.NoError(t, err2)
 	})
 }
