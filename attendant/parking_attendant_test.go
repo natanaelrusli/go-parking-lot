@@ -267,4 +267,48 @@ func TestParkingStyle(t *testing.T) {
 		assert.Equal(t, 1, count1)
 		assert.Equal(t, 1, count2)
 	})
+
+	t.Run("should be able to change their style of parking at anytime", func(t *testing.T) {
+		// make 2 parking lot
+		pl1 := parkinglot.New(2)
+		pl2 := parkinglot.New(3)
+
+		// make 2 cars
+		c0 := car.NewCar("RI1")
+		c1 := car.NewCar("B7676POO")
+
+		// assign both parking lot to the same attendant
+		att := NewParkingAttendant("sule", []*parkinglot.ParkingLot{
+			pl1.(*parkinglot.ParkingLot), pl2.(*parkinglot.ParkingLot),
+		})
+
+		// when parking for the first time, it should park in the first available lot
+		// which would be pl1
+		ticket1, err1 := att.ParkCar(c0)
+
+		assert.NotNil(t, ticket1)
+		assert.NoError(t, err1)
+
+		count1 := pl1.GetParkedCarCount()
+		count2 := pl2.GetParkedCarCount()
+
+		assert.Equal(t, 1, count1)
+		assert.Equal(t, 0, count2)
+
+		// change parking style strategy mid runtime
+		att.SetParkingStrategy("capacity")
+
+		// now attendant should park to lot with most capacity
+		// which would be pl2
+		ticket2, err2 := att.ParkCar(c1)
+
+		assert.NotNil(t, ticket2)
+		assert.NoError(t, err2)
+
+		count1 = pl1.GetParkedCarCount()
+		count2 = pl2.GetParkedCarCount()
+
+		assert.Equal(t, 1, count1)
+		assert.Equal(t, 1, count2)
+	})
 }
