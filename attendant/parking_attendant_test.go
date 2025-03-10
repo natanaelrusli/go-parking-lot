@@ -253,3 +253,106 @@ func TestAttendantAvailableLots(t *testing.T) {
 		assert.Equal(t, allAvailableLot[pl1.(*parkinglot.ParkingLot).ID], true)
 	})
 }
+
+func TestParkingStyles(t *testing.T) {
+	t.Run("should park car using default strategy when no style is set", func(t *testing.T) {
+		// Arrange
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(10)
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+		car := car.NewCar("ABC123")
+
+		// Act
+		ticket, err := attendant.ParkCar(car)
+
+		// Assert
+		assert.NotNil(t, ticket)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, lot1.GetParkedCarCount()) // Should use first available lot
+		assert.Equal(t, 0, lot2.GetParkedCarCount())
+	})
+
+	t.Run("should park car using most capacity strategy", func(t *testing.T) {
+		// Arrange
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(10)
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+		car := car.NewCar("ABC123")
+
+		// Change to most capacity strategy
+		strategy := parking_styles.NewMostCapacityStrategy()
+		attendant.ChangeParkingStrategy(strategy)
+
+		// Act
+		ticket, err := attendant.ParkCar(car)
+
+		// Assert
+		assert.NotNil(t, ticket)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, lot1.GetParkedCarCount())
+		assert.Equal(t, 1, lot2.GetParkedCarCount()) // Should use lot with highest capacity
+	})
+
+	t.Run("should park car using most free space strategy", func(t *testing.T) {
+		// Arrange
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(5)
+
+		// Park a car in lot1 to make lot2 have more free space
+		lot1.Park(car.NewCar("XYZ789"))
+
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+		newCar := car.NewCar("ABC123")
+
+		// Change to most free space strategy
+		strategy := parking_styles.NewMostFreeSpaceStrategy()
+		attendant.ChangeParkingStrategy(strategy)
+
+		// Act
+		ticket, err := attendant.ParkCar(newCar)
+
+		// Assert
+		assert.NotNil(t, ticket)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, lot1.GetParkedCarCount())
+		assert.Equal(t, 1, lot2.GetParkedCarCount()) // Should use lot with most free space
+	})
+
+	t.Run("should be able to change parking strategy dynamically", func(t *testing.T) {
+		// Arrange
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(10)
+		attendant := NewParkingAttendant("John", []*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+
+		car1 := car.NewCar("ABC123")
+		car2 := car.NewCar("XYZ789")
+
+		// First use most capacity strategy
+		attendant.ChangeParkingStrategy(parking_styles.NewMostFreeSpaceStrategy())
+		ticket1, _ := attendant.ParkCar(car1)
+		assert.Equal(t, 0, lot1.GetParkedCarCount())
+		assert.Equal(t, 1, lot2.GetParkedCarCount())
+
+		// Then change to most free space strategy
+		attendant.ChangeParkingStrategy(parking_styles.NewMostCapacityStrategy())
+		ticket2, _ := attendant.ParkCar(car2)
+		assert.Equal(t, 0, lot1.GetParkedCarCount())
+		assert.Equal(t, 2, lot2.GetParkedCarCount())
+
+		// Cleanup
+		attendant.UnparkCar(ticket1)
+		attendant.UnparkCar(ticket2)
+	})
+}

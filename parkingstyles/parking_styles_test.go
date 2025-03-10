@@ -8,36 +8,140 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParkingStyles(t *testing.T) {
-	t.Run("should choose lot with highest capacity", func(t *testing.T) {
-		cs := NewMostCapacityStrategy()
-		pl1 := parkinglot.New(1)
-		pl2 := parkinglot.New(2)
+func TestMostCapacityStrategy(t *testing.T) {
+	t.Run("should choose lot with highest capacity when all lots are empty", func(t *testing.T) {
+		// Arrange
+		strategy := NewMostCapacityStrategy()
+		lot1 := parkinglot.New(3)
+		lot2 := parkinglot.New(5)
+		lot3 := parkinglot.New(2)
 
-		choosenLot := cs.GetLot([]*parkinglot.ParkingLot{
-			pl1.(*parkinglot.ParkingLot),
-			pl2.(*parkinglot.ParkingLot),
+		// Act
+		chosenLot := strategy.GetLot([]*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+			lot3.(*parkinglot.ParkingLot),
 		})
 
-		assert.Equal(t, choosenLot, pl2)
+		// Assert
+		assert.Equal(t, lot2, chosenLot)
 	})
 
-	t.Run("should choose lot with highest free space", func(t *testing.T) {
-		cs := NewMostFreeSpaceStrategy()
-		pl1 := parkinglot.New(3)
-		pl2 := parkinglot.New(2)
+	t.Run("should choose lot with highest capacity even when some lots are partially filled", func(t *testing.T) {
+		// Arrange
+		strategy := NewMostCapacityStrategy()
+		lot1 := parkinglot.New(3)
+		lot2 := parkinglot.New(5)
+		lot3 := parkinglot.New(2)
 
-		c1 := car.NewCar("B5647PPP")
-		c2 := car.NewCar("B5647PPO")
+		// Park some cars in lot2
+		car1 := car.NewCar("ABC123")
+		car2 := car.NewCar("DEF456")
+		lot2.Park(car1)
+		lot2.Park(car2)
 
-		pl1.Park(c1)
-		pl1.Park(c2)
-
-		choosenLot := cs.GetLot([]*parkinglot.ParkingLot{
-			pl1.(*parkinglot.ParkingLot),
-			pl2.(*parkinglot.ParkingLot),
+		// Act
+		chosenLot := strategy.GetLot([]*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+			lot3.(*parkinglot.ParkingLot),
 		})
 
-		assert.Equal(t, choosenLot, pl2)
+		// Assert
+		assert.Equal(t, lot2, chosenLot)
+	})
+
+	t.Run("should choose first lot when multiple lots have same capacity", func(t *testing.T) {
+		// Arrange
+		strategy := NewMostCapacityStrategy()
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(5)
+
+		// Act
+		chosenLot := strategy.GetLot([]*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+
+		// Assert
+		assert.Equal(t, lot1, chosenLot)
+	})
+}
+
+func TestMostFreeSpaceStrategy(t *testing.T) {
+	t.Run("should choose lot with most free spaces when lots have different occupancy", func(t *testing.T) {
+		// Arrange
+		strategy := NewMostFreeSpaceStrategy()
+		lot1 := parkinglot.New(3)
+		lot2 := parkinglot.New(5)
+		lot3 := parkinglot.New(4)
+
+		// Park cars in lots
+		car1 := car.NewCar("ABC123")
+		car2 := car.NewCar("DEF456")
+		car3 := car.NewCar("GHI789")
+
+		lot1.Park(car1) // 2 spaces left
+		lot2.Park(car2) // 4 spaces left
+		lot2.Park(car3) // 3 spaces left
+
+		// Act
+		chosenLot := strategy.GetLot([]*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+			lot3.(*parkinglot.ParkingLot),
+		})
+
+		// Assert
+		assert.Equal(t, lot3, chosenLot) // lot3 has 4 free spaces
+	})
+
+	t.Run("should choose lot with most free spaces when lots have same capacity", func(t *testing.T) {
+		// Arrange
+		strategy := NewMostFreeSpaceStrategy()
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(5)
+
+		// Park cars in lot1
+		car1 := car.NewCar("ABC123")
+		car2 := car.NewCar("DEF456")
+		lot1.Park(car1)
+		lot1.Park(car2)
+
+		// Act
+		chosenLot := strategy.GetLot([]*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+
+		// Assert
+		assert.Equal(t, lot2, chosenLot) // lot2 has 5 free spaces vs lot1's 3
+	})
+
+	t.Run("should choose first lot when multiple lots have same free space", func(t *testing.T) {
+		// Arrange
+		strategy := NewMostFreeSpaceStrategy()
+		lot1 := parkinglot.New(5)
+		lot2 := parkinglot.New(5)
+
+		// Act
+		chosenLot := strategy.GetLot([]*parkinglot.ParkingLot{
+			lot1.(*parkinglot.ParkingLot),
+			lot2.(*parkinglot.ParkingLot),
+		})
+
+		// Assert
+		assert.Equal(t, lot1, chosenLot)
+	})
+
+	t.Run("should handle empty lots list", func(t *testing.T) {
+		// Arrange
+		strategy := NewMostFreeSpaceStrategy()
+
+		// Act
+		chosenLot := strategy.GetLot([]*parkinglot.ParkingLot{})
+
+		// Assert
+		assert.Equal(t, &parkinglot.ParkingLot{}, chosenLot)
 	})
 }
